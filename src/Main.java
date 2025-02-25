@@ -9,7 +9,7 @@ public class Main {
     static Scanner sc = new Scanner(System.in);
     public static void main(String[] args) {
         FTPClient cliente=new FTPClient();
-        String serverFTP="192.168.1.31";
+        String serverFTP="192.168.146.164";
         boolean anonimo = false;
         boolean conectado = false;
 
@@ -22,41 +22,42 @@ public class Main {
             int codigo=cliente.getReplyCode();
             System.out.println("Código:"+codigo);
 
-            System.out.print("Introduce el nombre de usuario: ");
-            nombreUsu = sc.next();
-            System.out.print("\nIntroduce la contraseña: ");
-            pass = sc.next();
 
-            while (!conectado) {
+            int cont = 0;
+            while (!conectado && cont < 3) {
+                System.out.print("Introduce el nombre de usuario: ");
+                nombreUsu = sc.next();
+                System.out.print("\nIntroduce la contraseña: ");
+                pass = sc.next();
                 if (!FTPReply.isPositiveCompletion(codigo)) {
                     System.err.println("Conexión rechazada");
                 } else {
                     if (nombreUsu.equals("anonymous")) {
                         anonimo = true;
-                        pass = "";
                     }
 
                     if (cliente.login(nombreUsu, pass)) {
                         conectado = true;
                         System.out.println("Usuario conectado");
                     } else {
-                        System.err.println("Usuario incorrecto");
+                        System.out.println("Usuario incorrecto");
+                        cont++;
                     }
                 }
             }
 
-            System.out.println("¿Que deseas hacer?" +
-                    "\n\t0-Subir archivo" +
-                    "\n\t1-Descargar archivo" +
-                    "\n\t2-Listar archivos" +
-                    "\n\t3-Salir");
+            if(conectado) {
+                System.out.println("¿Que deseas hacer?" +
+                        "\n\t0-Descargar archivo" +
+                        "\n\t1-Subir archivo" +
+                        "\n\t2-Listar archivos" +
+                        "\n\t3-Salir");
 
-            int opcion = sc.nextInt();
-            boolean exit = false;
-            while(!exit) {
-                switch (opcion) {
-                    case 0:
-                        if (!anonimo) {
+                int opcion = sc.nextInt();
+                boolean exit = false;
+                while (!exit) {
+                    switch (opcion) {
+                        case 0:
                             cliente.setFileType(FTPClient.BINARY_FILE_TYPE);
 
                             System.out.println("¿Que archivo quieres descargarte?(Indicar también la extensión)");
@@ -68,70 +69,74 @@ public class Main {
                             else
                                 System.err.println("Ha habido un error en la descarga del archivo, compruebe el nombre del archivo");
                             bus.close();
-                        }
-                        System.out.println("¿Que deseas hacer?" +
-                                "\n\t0-Subir archivo" +
-                                "\n\t1-Descargar archivo" +
-                                "\n\t2-Listar archivos" +
-                                "\n\t3-Salir");
+                            System.out.println("¿Que deseas hacer?" +
+                                    "\n\t0-Descargar archivo" +
+                                    "\n\t1-Subir archivo" +
+                                    "\n\t2-Listar archivos" +
+                                    "\n\t3-Salir");
 
-                        opcion = sc.nextInt();
-                        break;
-                    case 1:
-                        try {
-                            cliente.setFileType(FTPClient.BINARY_FILE_TYPE);
+                            opcion = sc.nextInt();
+                            break;
+                        case 1:
+                            if (!anonimo) {
+                                try {
+                                    cliente.setFileType(FTPClient.BINARY_FILE_TYPE);
 
-                            System.out.println("¿Como se llama el archivo que vas a subir?(Indicar también la extensión)");
-                            String archivo = sc.next();
+                                    System.out.println("¿Como se llama el archivo que vas a subir?(Indicar también la extensión)");
+                                    String archivo = sc.next();
 
-                            BufferedInputStream bis = new BufferedInputStream(new FileInputStream(archivo));
+                                    BufferedInputStream bis = new BufferedInputStream(new FileInputStream(archivo));
 
-                            cliente.storeFile(archivo, bis);
-                        } catch (IOException e) {
-                            System.err.println("No existe el archivo");
-                        }
-                        System.out.println("¿Que deseas hacer?" +
-                                "\n\t0-Subir archivo" +
-                                "\n\t1-Descargar archivo" +
-                                "\n\t2-Listar archivos" +
-                                "\n\t3-Salir");
+                                    cliente.storeFile(archivo, bis);
+                                } catch (IOException e) {
+                                    System.err.println("No existe el archivo");
+                                }
+                            } else {
+                                System.out.println("El usuario anonimo no puede subir archivos");
+                            }
+                            System.out.println("¿Que deseas hacer?" +
+                                    "\n\t0-Descargar archivo" +
+                                    "\n\t1-Subir archivo" +
+                                    "\n\t2-Listar archivos" +
+                                    "\n\t3-Salir");
 
-                        opcion = sc.nextInt();
-                        break;
-                    case 2:
-                        cliente.enterLocalPassiveMode();
-                        FTPFile[] archivos = cliente.listFiles();
-                        System.out.println(cliente.printWorkingDirectory());
-                        for (FTPFile a : archivos) {
-                            System.out.println("\t" + a.getName() + " => " + a.getType());
-                        }
-                        System.out.println("¿Que deseas hacer?" +
-                                "\n\t0-Subir archivo" +
-                                "\n\t1-Descargar archivo" +
-                                "\n\t2-Listar archivos" +
-                                "\n\t3-Salir");
+                            opcion = sc.nextInt();
+                            break;
+                        case 2:
+                            cliente.enterLocalPassiveMode();
+                            FTPFile[] archivos = cliente.listFiles();
+                            System.out.println(cliente.printWorkingDirectory());
+                            for (FTPFile a : archivos) {
+                                System.out.println("\t" + a.getName() + " => " + a.getType());
+                            }
+                            System.out.println("¿Que deseas hacer?" +
+                                    "\n\t0-Descargar archivo" +
+                                    "\n\t1-Subir archivo" +
+                                    "\n\t2-Listar archivos" +
+                                    "\n\t3-Salir");
 
-                        opcion = sc.nextInt();
-                        break;
-                    case 3:
-                        exit = true;
-                        System.out.println("Saliendo de la conexión");
-                        break;
-                    default:
-                        System.err.println("Opción no valida");
-                        System.out.println("¿Que deseas hacer?" +
-                                "\n\t0-Subir archivo" +
-                                "\n\t1-Descargar archivo" +
-                                "\n\t2-Listar archivos" +
-                                "\n\t3-Salir");
+                            opcion = sc.nextInt();
+                            break;
+                        case 3:
+                            exit = true;
+                            System.out.println("Saliendo de la conexión");
+                            break;
+                        default:
+                            System.err.println("Opción no valida");
+                            System.out.println("¿Que deseas hacer?" +
+                                    "\n\t0-Descargar archivo" +
+                                    "\n\t1-Subir archivo" +
+                                    "\n\t2-Listar archivos" +
+                                    "\n\t3-Salir");
+                            opcion = sc.nextInt();
 
-                        opcion = sc.nextInt();
+                    }
                 }
+                if (cliente.logout())
+                    System.out.println("Logout del servidor");
+                else
+                    System.err.println("Error al hacer logout");
             }
-            if (cliente.logout())
-                System.out.println("Logout del servidor");
-            else
-                System.err.println("Error al hacer logout");
 
             cliente.disconnect();
             System.out.println("Fin de la conexión");
